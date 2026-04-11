@@ -4,8 +4,9 @@
   "service": "app",
   "runServices": ["db"],
   "workspaceFolder": "/workspaces/Pacevite",
+  "remoteUser": "vscode",
   "shutdownAction": "stopCompose",
-  "postCreateCommand": "dotnet restore",
+  "postCreateCommand": "dotnet restore Pacevite.slnx",
   "forwardPorts": [8080],
   "customizations": {
     "vscode": {

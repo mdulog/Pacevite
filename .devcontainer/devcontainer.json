@@ -1,0 +1,19 @@
+{
+  "name": "Pacevite",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.devcontainer.yml"],
+  "service": "app",
+  "runServices": ["db"],
+  "workspaceFolder": "/workspaces/Pacevite",
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "dotnet restore",
+  "forwardPorts": [8080],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "eamodio.gitlens",
+        "humao.rest-client"
+      ]
+    }
+  }
+}

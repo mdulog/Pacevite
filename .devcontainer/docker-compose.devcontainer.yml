@@ -1,0 +1,12 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/dotnet:1-10.0
+    volumes:
+      - ..:/workspaces/Pacevite:cached
+    command: sleep infinity
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=pacevite;Username=${DB_USER:-pacevite_user};Password=${DB_PASSWORD:-dev_password_123}"

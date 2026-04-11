@@ -10,6 +10,7 @@ obj/
 *.user
 .vs/
 .vscode/
+!.vscode/settings.json
 *.suo
 *.ncrunch*
 [Tt]emp/

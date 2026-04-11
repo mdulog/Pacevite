@@ -1,0 +1,3 @@
+{
+  "dev.containers.dockerPath": "/usr/bin/podman"
+}

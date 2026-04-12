@@ -5,7 +5,6 @@ using Pacevite.Api.Domain.Entities;
 using Pacevite.Api.Domain.Enums;
 using Pacevite.Api.Infrastructure.Chat.Tools;
 using Pacevite.Api.Infrastructure.Persistence;
-using TUnit.Core;
 
 namespace Pacevite.Api.Tests.Unit.Chat;
 

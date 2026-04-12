@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Pacevite.Api.Domain.Enums;
 using Pacevite.Api.Infrastructure.Persistence;
 

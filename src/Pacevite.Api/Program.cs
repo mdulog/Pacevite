@@ -13,11 +13,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pacevite.Api.Features.Auth;
+using Pacevite.Api.Features.Chat;
 using Pacevite.Api.Features.Events;
 using Pacevite.Api.Features.Events.PredictionCoaching;
 using Pacevite.Api.Features.Sync;
 using Pacevite.Api.Infrastructure.Auth;
 using Pacevite.Api.Infrastructure.Chat;
+using Pacevite.Api.Infrastructure.Chat.Tools;
 using Pacevite.Api.Infrastructure.Parsing;
 using Pacevite.Api.Infrastructure.Persistence;
 using Pacevite.Api.Infrastructure.OpenApi;
@@ -118,11 +120,11 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.Configure<AnthropicOptions>(
     builder.Configuration.GetSection(AnthropicOptions.SectionName));
 
-builder.Services.AddScoped<AnthropicClient>(sp =>
-{
-    var opts = sp.GetRequiredService<IOptions<AnthropicOptions>>().Value;
-    return new AnthropicClient(new APIAuthentication(opts.ApiKey));
-});
+var anthropicApiKey = builder.Configuration["Anthropic:ApiKey"]
+    ?? throw new InvalidOperationException("Anthropic:ApiKey is required.");
+
+// Singleton: expensive to construct; safe to share across requests.
+builder.Services.AddSingleton(new AnthropicClient(new APIAuthentication(anthropicApiKey)));
 
 builder.Services.AddScoped<PredictionCoachingHandler>();
 
@@ -142,6 +144,26 @@ builder.Services.AddHttpClient<IStravaClient, StravaClient>(client =>
 {
     client.BaseAddress = new Uri("https://www.strava.com/");
 });
+
+// ── Chat Tool Handlers ────────────────────────────────────────────────────────
+// DB-backed handlers are Scoped (tied to the per-request DbContext).
+builder.Services.AddScoped<GetEventsToolHandler>();
+builder.Services.AddScoped<GetPersonalBestsToolHandler>();
+
+// HTTP scrape handlers use AddHttpClient so IHttpClientFactory manages connection pooling.
+builder.Services.AddHttpClient<ScrapeRaceResultsToolHandler>();
+builder.Services.AddHttpClient<FetchTrainingTipsToolHandler>();
+
+builder.Services.AddScoped<IChatToolExecutor>(sp =>
+    new ChatToolExecutor(
+        new Dictionary<string, IChatToolHandler>
+        {
+            ["get_events"]          = sp.GetRequiredService<GetEventsToolHandler>(),
+            ["get_personal_bests"]  = sp.GetRequiredService<GetPersonalBestsToolHandler>(),
+            ["scrape_race_results"] = sp.GetRequiredService<ScrapeRaceResultsToolHandler>(),
+            ["fetch_training_tips"] = sp.GetRequiredService<FetchTrainingTipsToolHandler>(),
+        },
+        sp.GetRequiredService<ILogger<ChatToolExecutor>>()));
 
 // ── OpenAPI ───────────────────────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
@@ -179,6 +201,7 @@ app.MapGroup("/api").MapAuthEndpoints();
 app.MapGroup("/api/events").RequireAuthorization().MapEventEndpoints();
 // Auth applied per-route inside MapSyncEndpoints — the Strava callback must be anonymous.
 app.MapGroup("/api/sync").MapSyncEndpoints();
+app.MapGroup("/api/chat").RequireAuthorization().MapChatEndpoints();
 
 app.Run();
 

@@ -104,8 +104,8 @@ public sealed class GetEventByIdTests : IAsyncDisposable
               "completion": "FINISHED",
               "elapsed_secs": 14400,
               "splits": [
-                { "split_type": "RUN", "split_label": "10km", "split_secs": 2940, "cumulative_secs": 2940 },
-                { "split_type": "RUN", "split_label": "21km", "split_secs": 3180, "cumulative_secs": 6120 }
+                { "split_type": "RUN", "split_label": "21km", "split_secs": 3180, "cumulative_secs": 6120 },
+                { "split_type": "RUN", "split_label": "10km", "split_secs": 2940, "cumulative_secs": 2940 }
               ]
             }]
             """;

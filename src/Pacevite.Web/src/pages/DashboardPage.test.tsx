@@ -29,9 +29,9 @@ describe('DashboardPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/personal bests/i)).toBeInTheDocument()
     })
-    // MARATHON appears in both sections (personal bests card + event list row)
+    // MARATHON appears in: personal bests card, event list row, and PbPanel button
     await waitFor(() => {
-      expect(screen.getAllByText('MARATHON')).toHaveLength(2)
+      expect(screen.getAllByText('MARATHON')).toHaveLength(3)
     })
   })
 
@@ -45,6 +45,43 @@ describe('DashboardPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No events yet.')).toBeInTheDocument()
+    })
+  })
+
+  it('shows progress chart panel when events are present', async () => {
+    // Arrange / Act
+    renderDashboard()
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('progress-chart-panel')).toBeInTheDocument()
+    })
+  })
+
+  it('shows empty state in progress chart when no events exist', async () => {
+    // Arrange
+    server.use(
+      http.get('http://localhost/api/events', () => HttpResponse.json([])),
+      http.get('http://localhost/api/events/personal-bests', () => HttpResponse.json([]))
+    )
+
+    // Act
+    renderDashboard()
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('progress-chart-empty')).toBeInTheDocument()
+    })
+  })
+
+  it('shows PB panel with event types when events are present', async () => {
+    // Arrange / Act
+    renderDashboard()
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('pb-panel')).toBeInTheDocument()
+      expect(within(screen.getByTestId('pb-panel')).getByText('MARATHON')).toBeInTheDocument()
     })
   })
 

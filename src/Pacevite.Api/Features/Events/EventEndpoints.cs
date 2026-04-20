@@ -3,6 +3,7 @@ using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Pacevite.Api.Contracts.Responses;
 using Pacevite.Api.Features.Events.DeleteEvent;
+using Pacevite.Api.Features.Events.GetEventById;
 using Pacevite.Api.Features.Events.GetEvents;
 using Pacevite.Api.Features.Events.GetPersonalBests;
 using Pacevite.Api.Features.Events.Upload;
@@ -16,6 +17,7 @@ public static class EventEndpoints
         app.MapPost("/upload", UploadAsync).WithName("UploadEvents").DisableAntiforgery();
         app.MapGet("/", GetEventsAsync).WithName("GetEvents");
         app.MapGet("/personal-bests", GetPersonalBestsAsync).WithName("GetPersonalBests");
+        app.MapGet("/{id:guid}", GetEventByIdAsync).WithName("GetEventById");
         app.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteEvent");
 
         return app;
@@ -73,6 +75,20 @@ public static class EventEndpoints
 
         // Always return 204 — revealing "not found vs not yours" would leak ownership info (A01).
         return TypedResults.NoContent();
+    }
+
+    private static async Task<Results<Ok<EventResponse>, NotFound>> GetEventByIdAsync(
+        Guid id,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var userId = GetUserId(user);
+        var result = await mediator.Send(new GetEventByIdQuery(id, userId), ct);
+
+        return result is null
+            ? TypedResults.NotFound()
+            : TypedResults.Ok(result);
     }
 
     private static string GetUserId(ClaimsPrincipal user) =>

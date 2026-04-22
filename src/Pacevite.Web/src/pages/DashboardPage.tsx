@@ -1,21 +1,27 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
-import { formatTime, type EventResponse, type PersonalBestResponse } from '@/lib/types'
-import { Upload, Trash2, Trophy, LogOut } from 'lucide-react'
+import { useEvents } from '@/hooks/useEvents'
+import { formatTime, type PersonalBestResponse } from '@/lib/types'
+import { groupByEventType, computePbs } from '@/lib/chartUtils'
+import { ProgressChart } from '@/components/ProgressChart'
+import { PbPanel } from '@/components/PbPanel'
+import { Upload, Trash2, Trophy, LogOut, ChartLine } from 'lucide-react'
 
 export function DashboardPage() {
   const { user, logout } = useAuth()
   const queryClient = useQueryClient()
 
-  const { data: events = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ['events'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<EventResponse[]>('/events')
-      return data
-    },
-  })
+  const { data: events = [], isLoading: eventsLoading } = useEvents()
+  const grouped = groupByEventType(events)
+  const pbs = computePbs(events)
+  const defaultType = Object.keys(grouped)[0] ?? ''
+  const [selectedType, setSelectedType] = useState<string>(defaultType)
+  const chartType = selectedType || defaultType
+  const chartEvents = grouped[chartType] ?? []
+  const pbId = pbs[chartType]?.id
 
   const { data: personalBests = [] } = useQuery({
     queryKey: ['personal-bests'],
@@ -56,6 +62,36 @@ export function DashboardPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        {/* Analytics panels */}
+        {events.length > 0 && (
+          <section data-testid="progress-chart-panel">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                <ChartLine size={14} /> Progress
+              </h2>
+              {Object.keys(grouped).length > 1 && (
+                <select
+                  value={chartType}
+                  onChange={e => setSelectedType(e.target.value)}
+                  className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600"
+                >
+                  {Object.keys(grouped).map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ProgressChart events={chartEvents} pbId={pbId} />
+              <PbPanel events={events} selectedType={chartType} onSelectType={setSelectedType} />
+            </div>
+          </section>
+        )}
+
+        {events.length === 0 && !eventsLoading && (
+          <div data-testid="progress-chart-empty" className="hidden" />
+        )}
+
         {/* Personal Bests */}
         {personalBests.length > 0 && (
           <section>
@@ -117,6 +153,12 @@ export function DashboardPage() {
                         #{ev.overallRank}{ev.fieldSize ? ` / ${ev.fieldSize}` : ''}
                       </p>
                     )}
+                    <Link
+                      to={`/events/${ev.id}`}
+                      className="text-xs text-indigo-600 hover:text-indigo-800"
+                    >
+                      View
+                    </Link>
                     <button
                       onClick={() => deleteMutation.mutate(ev.id)}
                       disabled={deleteMutation.isPending}

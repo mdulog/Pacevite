@@ -4,6 +4,7 @@ using TUnit.Core;
 
 namespace Pacevite.Api.Tests.Unit.Parsers;
 
+[Category("Unit")]
 public sealed class JsonEventParserTests
 {
     private readonly JsonEventParser _parser = new();

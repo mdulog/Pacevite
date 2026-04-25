@@ -1,3 +1,10 @@
 {
-  "dev.containers.dockerPath": "podman"
+  "dev.containers.dockerPath": "podman",
+  "postman.settings.dotenv-detection-notification-visibility": false,
+
+  // Playwright extension — points it at the config in the web sub-project
+  "playwright.configDir": "src/Pacevite.Web",
+
+  // .NET Test Explorer (community extension) — discover all test projects
+  "dotnet-test-explorer.testProjectPath": "tests/**/*.csproj"
 }

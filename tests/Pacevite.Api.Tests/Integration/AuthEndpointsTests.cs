@@ -11,31 +11,29 @@ using TUnit.Core;
 
 namespace Pacevite.Api.Tests.Integration;
 
-// One container shared across all tests in this class — TUnit honours ClassConstructor
-// and class teardown via IAsyncDisposable.
-public sealed class AuthEndpointsTests : IAsyncDisposable
+[Category("Integration")]
+public sealed class AuthEndpointsTests
 {
-    private readonly PostgreSqlContainer _postgres;
-    private readonly HttpClient _client;
-    private readonly WebApplicationFactory<Program> _factory;
+    private PostgreSqlContainer _postgres = null!;
+    private HttpClient _client = null!;
+    private WebApplicationFactory<Program> _factory = null!;
 
-    public AuthEndpointsTests()
+    [Before(Test)]
+    public async Task SetUpAsync()
     {
-        _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        _postgres = new PostgreSqlBuilder("postgres:17")
             .WithDatabase("pacevite_test")
             .WithUsername("test")
             .WithPassword("test")
             .Build();
 
-        _postgres.StartAsync().GetAwaiter().GetResult();
+        await _postgres.StartAsync();
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(host =>
             {
                 host.ConfigureServices(services =>
                 {
-                    // Replace DbContext with test container connection
                     var descriptor = services.SingleOrDefault(
                         d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
                     if (descriptor is not null)
@@ -57,6 +55,14 @@ public sealed class AuthEndpointsTests : IAsyncDisposable
             });
 
         _client = _factory.CreateClient();
+    }
+
+    [After(Test)]
+    public async Task TearDownAsync()
+    {
+        _client.Dispose();
+        await _factory.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 
     [Test]
@@ -137,12 +143,5 @@ public sealed class AuthEndpointsTests : IAsyncDisposable
             new LoginRequest("nobody@example.com", "P@ssword1!"));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _client.Dispose();
-        await _factory.DisposeAsync();
-        await _postgres.DisposeAsync();
     }
 }

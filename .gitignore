@@ -3,6 +3,7 @@
 
 # Environment — never commit secrets
 .env
+appsettings.*.json
 
 # .NET
 bin/
@@ -31,3 +32,4 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+.superpowers/

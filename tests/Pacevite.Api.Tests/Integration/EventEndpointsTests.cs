@@ -13,22 +13,23 @@ using TUnit.Core;
 
 namespace Pacevite.Api.Tests.Integration;
 
-public sealed class EventEndpointsTests : IAsyncDisposable
+[Category("Integration")]
+public sealed class EventEndpointsTests
 {
-    private readonly PostgreSqlContainer _postgres;
-    private readonly HttpClient _client;
-    private readonly WebApplicationFactory<Program> _factory;
+    private PostgreSqlContainer _postgres = null!;
+    private HttpClient _client = null!;
+    private WebApplicationFactory<Program> _factory = null!;
 
-    public EventEndpointsTests()
+    [Before(Test)]
+    public async Task SetUpAsync()
     {
-        _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        _postgres = new PostgreSqlBuilder("postgres:17")
             .WithDatabase("pacevite_events_test")
             .WithUsername("test")
             .WithPassword("test")
             .Build();
 
-        _postgres.StartAsync().GetAwaiter().GetResult();
+        await _postgres.StartAsync();
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(host =>
@@ -54,6 +55,14 @@ public sealed class EventEndpointsTests : IAsyncDisposable
             });
 
         _client = _factory.CreateClient();
+    }
+
+    [After(Test)]
+    public async Task TearDownAsync()
+    {
+        _client.Dispose();
+        await _factory.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 
     private async Task<string> GetTokenAsync(string email = "events-user@example.com")
@@ -143,7 +152,7 @@ public sealed class EventEndpointsTests : IAsyncDisposable
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
-        await Assert.That(events!.Count).IsEqualTo(0); // duplicate skipped
+        await Assert.That(events!.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -173,7 +182,6 @@ public sealed class EventEndpointsTests : IAsyncDisposable
         var token = await GetTokenAsync("pb-user@example.com");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        // Two marathons — PB should be the faster one (12000s)
         const string csv = """
             MARATHON,Marathon A,2023-04-23,FINISHED,14400
             MARATHON,Marathon B,2024-04-21,FINISHED,12000
@@ -186,7 +194,7 @@ public sealed class EventEndpointsTests : IAsyncDisposable
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         var pbs = await response.Content.ReadFromJsonAsync<List<PersonalBestResponse>>();
-        await Assert.That(pbs!.Count).IsEqualTo(2); // MARATHON + HYROX
+        await Assert.That(pbs!.Count).IsEqualTo(2);
 
         var marathonPb = pbs.Single(p => p.EventType == "MARATHON");
         await Assert.That(marathonPb.ElapsedSecs).IsEqualTo(12000);
@@ -246,10 +254,79 @@ public sealed class EventEndpointsTests : IAsyncDisposable
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
 
-    public async ValueTask DisposeAsync()
+    [Test]
+    public async Task Upload_JsonWithSplits_UploadResponseIncludesSplits()
     {
-        _client.Dispose();
-        await _factory.DisposeAsync();
-        await _postgres.DisposeAsync();
+        var token = await GetTokenAsync("splits-upload@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        const string json = """
+            [{
+              "event_type": "HYROX",
+              "event_name": "HYROX Berlin 2024",
+              "event_date": "2024-11-10",
+              "completion": "FINISHED",
+              "elapsed_secs": 5400,
+              "splits": [
+                { "split_type": "STATION", "split_label": "SkiErg", "split_secs": 300, "cumulative_secs": 300 },
+                { "split_type": "RUN",     "split_label": "Run 1",  "split_secs": 420, "cumulative_secs": 720 }
+              ]
+            }]
+            """;
+
+        var response = await _client.PostAsync("/api/events/upload", BuildJsonUpload(json));
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+        await Assert.That(events![0].Splits.Count).IsEqualTo(2);
+        await Assert.That(events[0].Splits[0].SplitLabel).IsEqualTo("SkiErg");
+        await Assert.That(events[0].Splits[0].SplitSecs).IsEqualTo(300);
+        await Assert.That(events[0].Splits[1].SplitLabel).IsEqualTo("Run 1");
+        await Assert.That(events[0].Splits[1].CumulativeSecs).IsEqualTo(720);
+    }
+
+    [Test]
+    public async Task Upload_JsonWithSplits_GetEventsReturnsSplits()
+    {
+        var token = await GetTokenAsync("splits-get@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        const string json = """
+            [{
+              "event_type": "HYROX",
+              "event_name": "HYROX Berlin 2024",
+              "event_date": "2024-11-10",
+              "completion": "FINISHED",
+              "elapsed_secs": 5400,
+              "splits": [
+                { "split_type": "STATION", "split_label": "SkiErg", "split_secs": 300, "cumulative_secs": 300 }
+              ]
+            }]
+            """;
+
+        await _client.PostAsync("/api/events/upload", BuildJsonUpload(json));
+
+        var response = await _client.GetAsync("/api/events");
+        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+
+        await Assert.That(events![0].Splits.Count).IsEqualTo(1);
+        await Assert.That(events[0].Splits[0].SplitType).IsEqualTo("STATION");
+        await Assert.That(events[0].Splits[0].SplitLabel).IsEqualTo("SkiErg");
+        await Assert.That(events[0].Splits[0].SplitSecs).IsEqualTo(300);
+        await Assert.That(events[0].Splits[0].CumulativeSecs).IsEqualTo(300);
+    }
+
+    [Test]
+    public async Task Upload_EventWithoutSplits_ReturnsEmptySplitsCollection()
+    {
+        var token = await GetTokenAsync("no-splits@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        const string csv = "MARATHON,Berlin Marathon,2024-09-29,FINISHED,14400";
+        var response = await _client.PostAsync("/api/events/upload", BuildCsvUpload(csv));
+
+        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+        await Assert.That(events![0].Splits.Count).IsEqualTo(0);
     }
 }

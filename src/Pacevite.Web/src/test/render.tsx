@@ -2,6 +2,7 @@ import { render, type RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthContext } from '@/context/AuthContext'
+import { ThemeProvider } from '@/context/ThemeContext'
 import { vi } from 'vitest'
 import type { ReactElement } from 'react'
 
@@ -35,13 +36,15 @@ export function renderWithProviders(
   }
 
   return render(
-    <QueryClientProvider client={makeQueryClient()}>
-      <AuthContext.Provider value={authValue}>
-        <MemoryRouter initialEntries={initialEntries}>
-          {ui}
-        </MemoryRouter>
-      </AuthContext.Provider>
-    </QueryClientProvider>,
+    <ThemeProvider>
+      <QueryClientProvider client={makeQueryClient()}>
+        <AuthContext.Provider value={authValue}>
+          <MemoryRouter initialEntries={initialEntries}>
+            {ui}
+          </MemoryRouter>
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    </ThemeProvider>,
     renderOptions
   )
 }

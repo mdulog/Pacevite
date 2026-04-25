@@ -1,7 +1,20 @@
 import '@testing-library/jest-dom'
-import { beforeAll, afterEach, afterAll } from 'vitest'
+import { beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { server } from './handlers'
 import { apiClient } from '@/lib/api'
+
+// JSDOM does not implement matchMedia — stub it so ThemeProvider mounts cleanly in tests.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
 
 // Recharts uses ResizeObserver internally (via ResponsiveContainer).
 // jsdom does not implement it, so we stub it out to prevent test crashes.

@@ -29,11 +29,11 @@ export function PbPanel({ events, selectedType, onSelectType }: Props) {
             key={type}
             onClick={() => onSelectType(type)}
             className={`w-full flex items-center gap-3 text-left rounded px-2 py-1.5 transition-colors ${
-              selectedType === type ? 'bg-gray-100' : 'hover:bg-gray-50'
+              selectedType === type ? 'bg-badge' : 'hover:bg-surface'
             }`}
           >
-            <span className="text-xs font-medium text-gray-600 w-28 truncate">{type}</span>
-            <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+            <span className="text-xs font-medium text-secondary w-28 truncate">{type}</span>
+            <div className="flex-1 bg-border rounded-full h-1.5">
               <div
                 className="bg-indigo-500 h-1.5 rounded-full"
                 style={{ width: `${Math.max(barPct, 10)}%` }}

@@ -8,6 +8,7 @@ import { formatTime, type PersonalBestResponse } from '@/lib/types'
 import { groupByEventType, computePbs } from '@/lib/chartUtils'
 import { ProgressChart } from '@/components/ProgressChart'
 import { PbPanel } from '@/components/PbPanel'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Upload, Trash2, Trophy, LogOut, ChartLine } from 'lucide-react'
 
 export function DashboardPage() {
@@ -40,21 +41,22 @@ export function DashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg">
       {/* Nav */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Pacevite</h1>
+      <header className="bg-surface border-b border-border px-6 py-4 flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-primary">Pacevite</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">{user?.email}</span>
+          <span className="text-sm text-secondary">{user?.email}</span>
           <Link
             to="/upload"
-            className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm px-3 py-2 rounded-md hover:bg-gray-800"
+            className="inline-flex items-center gap-2 bg-action text-action-fg text-sm px-3 py-2 rounded-md hover:bg-action-hover"
           >
             <Upload size={14} /> Upload
           </Link>
+          <ThemeToggle />
           <button
             onClick={logout}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+            className="inline-flex items-center gap-2 text-sm text-secondary hover:text-primary"
           >
             <LogOut size={14} /> Sign out
           </button>
@@ -66,14 +68,14 @@ export function DashboardPage() {
         {events.length > 0 && (
           <section data-testid="progress-chart-panel">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-secondary uppercase tracking-wide flex items-center gap-2">
                 <ChartLine size={14} /> Progress
               </h2>
               {Object.keys(grouped).length > 1 && (
                 <select
                   value={chartType}
                   onChange={e => setSelectedType(e.target.value)}
-                  className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600"
+                  className="text-xs border border-border rounded px-2 py-1 text-secondary bg-surface"
                 >
                   {Object.keys(grouped).map(t => (
                     <option key={t} value={t}>{t}</option>
@@ -81,7 +83,7 @@ export function DashboardPage() {
                 </select>
               )}
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-surface rounded-lg border border-border p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
               <ProgressChart events={chartEvents} pbId={pbId} />
               <PbPanel events={events} selectedType={chartType} onSelectType={setSelectedType} />
             </div>
@@ -95,16 +97,16 @@ export function DashboardPage() {
         {/* Personal Bests */}
         {personalBests.length > 0 && (
           <section>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-secondary uppercase tracking-wide mb-3 flex items-center gap-2">
               <Trophy size={14} /> Personal Bests
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {personalBests.map(pb => (
-                <div key={pb.eventId} className="bg-white rounded-lg border border-gray-200 p-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase">{pb.eventType}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{formatTime(pb.elapsedSecs)}</p>
-                  <p className="text-xs text-gray-500 mt-1 truncate">{pb.eventName}</p>
-                  <p className="text-xs text-gray-400">{pb.eventDate}</p>
+                <div key={pb.eventId} className="bg-surface rounded-lg border border-border p-4">
+                  <p className="text-xs font-medium text-secondary uppercase">{pb.eventType}</p>
+                  <p className="text-2xl font-bold text-primary mt-1">{formatTime(pb.elapsedSecs)}</p>
+                  <p className="text-xs text-secondary mt-1 truncate">{pb.eventName}</p>
+                  <p className="text-xs text-muted">{pb.eventDate}</p>
                 </div>
               ))}
             </div>
@@ -113,43 +115,43 @@ export function DashboardPage() {
 
         {/* Event List */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-sm font-semibold text-secondary uppercase tracking-wide mb-3">
             All Events
           </h2>
 
-          {eventsLoading && <p className="text-sm text-gray-500">Loading…</p>}
+          {eventsLoading && <p className="text-sm text-secondary">Loading…</p>}
 
           {!eventsLoading && events.length === 0 && (
-            <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
-              <p className="text-gray-500 text-sm">No events yet.</p>
-              <Link to="/upload" className="text-sm font-medium text-gray-900 underline mt-2 inline-block">
+            <div className="bg-surface rounded-lg border border-dashed border-border p-12 text-center">
+              <p className="text-secondary text-sm">No events yet.</p>
+              <Link to="/upload" className="text-sm font-medium text-primary underline mt-2 inline-block">
                 Upload your first event
               </Link>
             </div>
           )}
 
           {events.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+            <div className="bg-surface rounded-lg border border-border divide-y divide-border">
               {events.map(ev => (
                 <div key={ev.id} className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-4">
-                    <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded uppercase">
+                    <span className="text-xs font-medium bg-badge text-badge-fg px-2 py-0.5 rounded uppercase">
                       {ev.eventType}
                     </span>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{ev.eventName}</p>
-                      <p className="text-xs text-gray-500">{ev.eventDate}</p>
+                      <p className="text-sm font-medium text-primary">{ev.eventName}</p>
+                      <p className="text-xs text-secondary">{ev.eventDate}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900">{formatTime(ev.elapsedSecs)}</p>
+                      <p className="text-sm font-semibold text-primary">{formatTime(ev.elapsedSecs)}</p>
                       <p className={`text-xs ${ev.completion === 'FINISHED' ? 'text-green-600' : 'text-red-500'}`}>
                         {ev.completion}
                       </p>
                     </div>
                     {ev.overallRank && (
-                      <p className="text-xs text-gray-500 w-20 text-right">
+                      <p className="text-xs text-secondary w-20 text-right">
                         #{ev.overallRank}{ev.fieldSize ? ` / ${ev.fieldSize}` : ''}
                       </p>
                     )}
@@ -162,7 +164,7 @@ export function DashboardPage() {
                     <button
                       onClick={() => deleteMutation.mutate(ev.id)}
                       disabled={deleteMutation.isPending}
-                      className="text-gray-400 hover:text-red-500 disabled:opacity-40"
+                      className="text-muted hover:text-red-500 disabled:opacity-40"
                       aria-label="Delete event"
                     >
                       <Trash2 size={14} />

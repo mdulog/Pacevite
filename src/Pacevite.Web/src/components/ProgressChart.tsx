@@ -2,6 +2,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import type { DotItemDotProps } from 'recharts/types/util/types'
 import type { EventResponse } from '@/lib/types'
 import { formatElapsed } from '@/lib/chartUtils'
+import { useTheme } from '@/context/ThemeContext'
 
 interface Props {
   events: EventResponse[]
@@ -30,9 +31,15 @@ function renderDot(pbId: string | undefined) {
 }
 
 export function ProgressChart({ events, pbId }: Props) {
+  useTheme() // re-render when theme changes so CSS vars are re-read
+
+  const style = getComputedStyle(document.documentElement)
+  const tickColor = style.getPropertyValue('--color-secondary').trim()
+  const tooltipBg = style.getPropertyValue('--color-surface').trim()
+
   if (events.length === 0) {
     return (
-      <p data-testid="progress-chart-empty" className="text-xs text-gray-400 py-8 text-center">
+      <p data-testid="progress-chart-empty" className="text-xs text-muted py-8 text-center">
         No events yet
       </p>
     )
@@ -49,10 +56,10 @@ export function ProgressChart({ events, pbId }: Props) {
     <div data-testid="progress-chart">
       <ResponsiveContainer width="100%" height={120}>
         <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 40 }}>
-          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} />
+          <XAxis dataKey="date" tick={{ fontSize: 10, fill: tickColor }} tickLine={false} />
           <YAxis
             tickFormatter={formatElapsed}
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
+            tick={{ fontSize: 10, fill: tickColor }}
             tickLine={false}
             axisLine={false}
             reversed
@@ -60,7 +67,7 @@ export function ProgressChart({ events, pbId }: Props) {
           />
           <Tooltip
             formatter={(value) => [formatElapsed(typeof value === 'number' ? value : 0), 'Time']}
-            contentStyle={{ background: '#1f2937', border: 'none', fontSize: 12 }}
+            contentStyle={{ background: tooltipBg, border: 'none', fontSize: 12 }}
           />
           <Line
             type="monotone"

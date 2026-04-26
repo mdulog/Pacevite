@@ -1,10 +1,12 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using Anthropic.SDK;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +14,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pacevite.Api.Features.Auth;
 using Pacevite.Api.Features.Events;
+using Pacevite.Api.Features.Events.PredictionCoaching;
 using Pacevite.Api.Infrastructure.Auth;
+using Pacevite.Api.Infrastructure.Chat;
 using Pacevite.Api.Infrastructure.Parsing;
 using Pacevite.Api.Infrastructure.Persistence;
 using Pacevite.Api.Infrastructure.OpenApi;
@@ -107,6 +111,18 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+// ── Anthropic ─────────────────────────────────────────────────────────────────
+builder.Services.Configure<AnthropicOptions>(
+    builder.Configuration.GetSection(AnthropicOptions.SectionName));
+
+builder.Services.AddScoped<AnthropicClient>(sp =>
+{
+    var opts = sp.GetRequiredService<IOptions<AnthropicOptions>>().Value;
+    return new AnthropicClient(new APIAuthentication(opts.ApiKey));
+});
+
+builder.Services.AddScoped<PredictionCoachingHandler>();
 
 // ── Event Parsers (registered as IEventParser — endpoint dispatches by content type) ──
 builder.Services.AddSingleton<IEventParser, CsvEventParser>();

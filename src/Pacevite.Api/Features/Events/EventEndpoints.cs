@@ -6,6 +6,8 @@ using Pacevite.Api.Features.Events.DeleteEvent;
 using Pacevite.Api.Features.Events.GetEventById;
 using Pacevite.Api.Features.Events.GetEvents;
 using Pacevite.Api.Features.Events.GetPersonalBests;
+using Pacevite.Api.Features.Events.GetPrediction;
+using Pacevite.Api.Features.Events.PredictionCoaching;
 using Pacevite.Api.Features.Events.Upload;
 
 namespace Pacevite.Api.Features.Events;
@@ -17,6 +19,8 @@ public static class EventEndpoints
         app.MapPost("/upload", UploadAsync).WithName("UploadEvents").DisableAntiforgery();
         app.MapGet("/", GetEventsAsync).WithName("GetEvents");
         app.MapGet("/personal-bests", GetPersonalBestsAsync).WithName("GetPersonalBests");
+        app.MapGet("/prediction", GetPredictionAsync).WithName("GetPrediction");
+        app.MapGet("/prediction/coaching", GetPredictionCoachingAsync).WithName("GetPredictionCoaching");
         app.MapGet("/{id:guid}", GetEventByIdAsync).WithName("GetEventById");
         app.MapDelete("/{id:guid}", DeleteAsync).WithName("DeleteEvent");
 
@@ -89,6 +93,29 @@ public static class EventEndpoints
         return result is null
             ? TypedResults.NotFound()
             : TypedResults.Ok(result);
+    }
+
+    private static async Task<Results<Ok<PredictionResponse>, Conflict<object>>> GetPredictionAsync(
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct,
+        string eventType = "")
+    {
+        var userId = GetUserId(user);
+        var result = await mediator.Send(new GetPredictionQuery(userId, eventType), ct);
+        return result is null
+            ? TypedResults.Conflict((object)new { message = $"Need at least 2 finished {eventType.ToUpperInvariant()} events to predict" })
+            : TypedResults.Ok(result);
+    }
+
+    private static async Task GetPredictionCoachingAsync(
+        HttpContext context,
+        ClaimsPrincipal user,
+        PredictionCoachingHandler handler,
+        CancellationToken ct,
+        string eventType = "")
+    {
+        await handler.HandleAsync(context, GetUserId(user), eventType, ct);
     }
 
     private static string GetUserId(ClaimsPrincipal user) =>

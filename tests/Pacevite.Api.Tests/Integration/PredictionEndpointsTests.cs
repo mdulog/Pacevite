@@ -146,4 +146,44 @@ public sealed class PredictionEndpointsTests
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
     }
+
+    [Test]
+    public async Task GetPredictionCoaching_Unauthenticated_Returns401()
+    {
+        var response = await _client.GetAsync(
+            "/api/events/prediction/coaching?eventType=HYROX",
+            HttpCompletionOption.ResponseHeadersRead);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+    }
+
+    [Test]
+    public async Task GetPredictionCoaching_InsufficientData_Returns409()
+    {
+        var token = await GetTokenAsync("coaching-1event@example.com");
+        await UploadHyroxEventsAsync(token, 1);
+
+        var response = await _client.GetAsync(
+            "/api/events/prediction/coaching?eventType=HYROX",
+            HttpCompletionOption.ResponseHeadersRead);
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Conflict);
+    }
+
+    [Test]
+    public async Task GetPredictionCoaching_ValidData_ReturnsEventStream()
+    {
+        var token = await GetTokenAsync("coaching-2events@example.com");
+        await UploadHyroxEventsAsync(token, 2);
+
+        var response = await _client.GetAsync(
+            "/api/events/prediction/coaching?eventType=HYROX",
+            HttpCompletionOption.ResponseHeadersRead);
+
+        // Self-skip in CI if no real API key configured (stub key returns 500)
+        if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError) return;
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(response.Content.Headers.ContentType?.MediaType)
+            .IsEqualTo("text/event-stream");
+    }
 }

@@ -170,17 +170,18 @@ public sealed class PredictionEndpointsTests
     }
 
     [Test]
-    public async Task GetPredictionCoaching_ValidData_ReturnsEventStream()
+    public async Task GetPredictionCoaching_ValidData_Returns200WithEventStreamContentType()
     {
+        // Validates the HTTP contract (status + content-type header) only.
+        // Actual streaming content requires a real Anthropic API key; the stub key
+        // triggers the error-path in PredictionCoachingHandler which still commits
+        // headers as 200/text/event-stream before writing the SSE error event.
         var token = await GetTokenAsync("coaching-2events@example.com");
         await UploadHyroxEventsAsync(token, 2);
 
         var response = await _client.GetAsync(
             "/api/events/prediction/coaching?eventType=HYROX",
             HttpCompletionOption.ResponseHeadersRead);
-
-        // Self-skip in CI if no real API key configured (stub key returns 500)
-        if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError) return;
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
         await Assert.That(response.Content.Headers.ContentType?.MediaType)

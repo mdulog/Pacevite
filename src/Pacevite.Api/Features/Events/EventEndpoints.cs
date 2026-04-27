@@ -95,7 +95,7 @@ public static class EventEndpoints
             : TypedResults.Ok(result);
     }
 
-    private static async Task<Results<Ok<PredictionResponse>, Conflict<object>>> GetPredictionAsync(
+    private static async Task<Results<Ok<PredictionResponse>, Conflict<string>>> GetPredictionAsync(
         ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct,
@@ -104,7 +104,7 @@ public static class EventEndpoints
         var userId = GetUserId(user);
         var result = await mediator.Send(new GetPredictionQuery(userId, eventType), ct);
         return result is null
-            ? TypedResults.Conflict((object)new { message = $"Need at least 2 finished {eventType.ToUpperInvariant()} events to predict" })
+            ? TypedResults.Conflict($"Insufficient data — ensure you have at least 2 finished {eventType.ToUpperInvariant()} events on different dates.")
             : TypedResults.Ok(result);
     }
 

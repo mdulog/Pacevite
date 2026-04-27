@@ -2,6 +2,7 @@ using System.Text;
 using Anthropic.SDK;
 using Anthropic.SDK.Messaging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Pacevite.Api.Domain.Enums;
 using Pacevite.Api.Infrastructure.Chat;
@@ -14,7 +15,8 @@ namespace Pacevite.Api.Features.Events.PredictionCoaching;
 public sealed class PredictionCoachingHandler(
     AppDbContext db,
     AnthropicClient anthropic,
-    IOptions<AnthropicOptions> options)
+    IOptions<AnthropicOptions> options,
+    ILogger<PredictionCoachingHandler> logger)
 {
     private const string SystemPrompt = """
         You are a performance coach for endurance and functional fitness events.
@@ -64,7 +66,7 @@ public sealed class PredictionCoachingHandler(
 
         var userMessage = BuildUserMessage(events, eventType, predictedSecs);
 
-        httpContext.Response.Headers.Append("Content-Type", "text/event-stream");
+        httpContext.Response.ContentType = "text/event-stream";
         httpContext.Response.Headers.Append("Cache-Control", "no-cache");
         httpContext.Response.Headers.Append("X-Accel-Buffering", "no");
 
@@ -87,8 +89,11 @@ public sealed class PredictionCoachingHandler(
 
             await WriteSseAsync(httpContext.Response, AppSseEvent.Done(), ct);
         }
-        catch (Exception) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
+            logger.LogCritical(ex,
+                "PredictionCoaching failed for {UserId} {EventType}",
+                userId, eventType);
             await WriteSseAsync(
                 httpContext.Response,
                 AppSseEvent.Error("Coaching analysis failed. Please try again."),

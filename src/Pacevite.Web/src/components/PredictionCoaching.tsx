@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { tokenStore } from '@/lib/api'
 import { Sparkles } from 'lucide-react'
 
@@ -11,8 +11,17 @@ export function PredictionCoaching({ eventType }: Props) {
   const [isStreaming, setIsStreaming]   = useState(false)
   const [error, setError]              = useState<string | null>(null)
   const [generated, setGenerated]      = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort() }
+  }, [])
 
   async function handleGenerate() {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setIsStreaming(true)
     setCoachingText('')
     setError(null)
@@ -23,7 +32,10 @@ export function PredictionCoaching({ eventType }: Props) {
     try {
       const response = await fetch(
         `/api/events/prediction/coaching?eventType=${eventType}`,
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
+        }
       )
 
       if (!response.ok || !response.body) {
@@ -63,7 +75,8 @@ export function PredictionCoaching({ eventType }: Props) {
           }
         }
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       setError('Coaching analysis failed. Please try again.')
     } finally {
       setIsStreaming(false)

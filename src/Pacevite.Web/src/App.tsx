@@ -8,6 +8,7 @@ import { RegisterPage } from '@/pages/RegisterPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { UploadPage } from '@/pages/UploadPage'
 import { EventDetailPage } from '@/pages/EventDetailPage'
+import { PredictPage } from '@/pages/PredictPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +43,14 @@ const router = createBrowserRouter([
     element: (
       <AuthGuard>
         <EventDetailPage />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/predict',
+    element: (
+      <AuthGuard>
+        <PredictPage />
       </AuthGuard>
     ),
   },

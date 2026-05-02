@@ -7,6 +7,7 @@ namespace Pacevite.Api.Features.Auth.Register;
 public sealed class RegisterHandler(
     UserManager<IdentityUser> userManager,
     IJwtTokenService jwtTokenService,
+    IRefreshTokenService refreshTokenService,
     ILogger<RegisterHandler> logger) : ICommandHandler<RegisterCommand, AuthResult>
 {
     public async ValueTask<AuthResult> Handle(RegisterCommand command, CancellationToken cancellationToken)
@@ -28,6 +29,7 @@ public sealed class RegisterHandler(
 
         logger.LogInformation("User registered: {UserId}", user.Id);
         var token = jwtTokenService.GenerateToken(user);
-        return AuthResult.Ok(user.Id, user.Email!, token);
+        var rawRefreshToken = await refreshTokenService.CreateAsync(user.Id, cancellationToken);
+        return AuthResult.Ok(user.Id, user.Email!, token, rawRefreshToken);
     }
 }

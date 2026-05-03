@@ -71,7 +71,7 @@ export const handlers = [
       [
         {
           id: 'event-2',
-          eventType: 'HALF_MARATHON',
+          eventType: 'Marathon',
           eventName: 'Test Half',
           eventDate: '2024-06-01',
           completion: 'FINISHED',

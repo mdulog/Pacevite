@@ -255,6 +255,28 @@ public sealed class EventEndpointsTests
     }
 
     [Test]
+    public async Task GetEvents_WithInvalidEventType_Returns400()
+    {
+        var token = await GetTokenAsync("invalid-type@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.GetAsync("/api/events?eventType=HALF_MARATHON");
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task GetEvents_WithFromAfterTo_Returns400()
+    {
+        var token = await GetTokenAsync("date-range@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.GetAsync("/api/events?from=2024-12-31&to=2024-01-01");
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
     public async Task Upload_JsonWithSplits_UploadResponseIncludesSplits()
     {
         var token = await GetTokenAsync("splits-upload@example.com");

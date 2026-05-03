@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
@@ -22,13 +22,13 @@ export function LoginPage() {
     },
   })
 
-  function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
     mutation.mutate()
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
+    <main className="min-h-screen flex items-center justify-center bg-bg">
       <div className="w-full max-w-sm bg-surface rounded-lg shadow p-8 space-y-6">
         <h1 className="text-2xl font-semibold text-primary">Sign in to Pacevite</h1>
 
@@ -38,6 +38,7 @@ export function LoginPage() {
             <input
               id="email"
               type="email"
+              autoComplete="email"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -50,6 +51,7 @@ export function LoginPage() {
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -77,6 +79,6 @@ export function LoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

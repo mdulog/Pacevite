@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
@@ -38,7 +38,7 @@ export function UploadPage() {
     setError(null)
   }
 
-  function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
     if (!file) return
     mutation.mutate(file)

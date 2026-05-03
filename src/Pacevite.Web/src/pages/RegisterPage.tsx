@@ -54,7 +54,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
+    <main className="min-h-screen flex items-center justify-center bg-bg">
       <div className="w-full max-w-sm bg-surface rounded-lg shadow p-8 space-y-6">
         <h1 className="text-2xl font-semibold text-primary">Create your account</h1>
 
@@ -64,6 +64,7 @@ export function RegisterPage() {
             <input
               id="email"
               type="email"
+              autoComplete="email"
               required
               value={email}
               onChange={e => { setEmail(e.target.value); setFieldErrors(f => ({ ...f, email: undefined })) }}
@@ -79,6 +80,7 @@ export function RegisterPage() {
             <input
               id="password"
               type="password"
+              autoComplete="new-password"
               required
               minLength={8}
               value={password}
@@ -106,6 +108,6 @@ export function RegisterPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

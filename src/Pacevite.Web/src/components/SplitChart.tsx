@@ -1,4 +1,3 @@
-// eslint-disable-next-line -- Cell is deprecated in Recharts v3 types but still functional
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer, LabelList } from 'recharts'
 import type { SplitDelta } from '@/lib/chartUtils'
 import { formatElapsed } from '@/lib/chartUtils'

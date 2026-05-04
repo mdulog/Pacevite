@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Logging.Abstractions;
 using Pacevite.Api.Infrastructure.Chat.Tools;
 
 namespace Pacevite.Api.Tests.Unit.Chat;
@@ -32,7 +33,7 @@ public sealed class ScrapeRaceResultsToolHandlerTests
             BaseAddress = new Uri("https://www.worldathletics.org")
         };
 
-        var handler = new ScrapeRaceResultsToolHandler(client);
+        var handler = new ScrapeRaceResultsToolHandler(client, NullLogger<ScrapeRaceResultsToolHandler>.Instance);
 
         // Act
         var result = await handler.ExecuteAsync(
@@ -56,7 +57,7 @@ public sealed class ScrapeRaceResultsToolHandlerTests
             BaseAddress = new Uri("https://www.worldathletics.org")
         };
 
-        var handler = new ScrapeRaceResultsToolHandler(client);
+        var handler = new ScrapeRaceResultsToolHandler(client, NullLogger<ScrapeRaceResultsToolHandler>.Instance);
 
         // Act
         var result = await handler.ExecuteAsync(

@@ -1,8 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Logging.Abstractions;
-
 namespace Pacevite.Api.Infrastructure.Chat.Tools;
 
 public sealed class ScrapeRaceResultsToolHandler(
@@ -21,9 +19,6 @@ public sealed class ScrapeRaceResultsToolHandler(
     private static readonly Regex WhitespacePattern = new(@"\s+", RegexOptions.Compiled);
 
     private const int MaxResultLength = 3000;
-
-    public ScrapeRaceResultsToolHandler(HttpClient httpClient)
-        : this(httpClient, NullLogger<ScrapeRaceResultsToolHandler>.Instance) { }
 
     public async ValueTask<string> ExecuteAsync(JsonNode input, string userId, CancellationToken ct)
     {

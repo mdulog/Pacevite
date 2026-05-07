@@ -23,6 +23,8 @@ obj/
 # Test results
 TestResults/
 coverage/
+playwright-report/
+test-results/
 
 # Node / frontend
 node_modules/

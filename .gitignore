@@ -9,6 +9,7 @@ appsettings.*.json
 bin/
 obj/
 *.user
+*.lscache
 .vs/
 .vscode/
 !.vscode/settings.json   # exception: Podman dev container setting travels with the repo

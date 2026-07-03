@@ -67,6 +67,7 @@ export function UploadPage() {
             <ul className="mt-2 text-sm text-secondary space-y-1 list-disc list-inside">
               <li><strong>CSV</strong> — event_type, event_name, event_date (yyyy-MM-dd), completion, elapsed_secs</li>
               <li><strong>JSON</strong> — array of event objects with the same fields</li>
+              <li><strong>GPX</strong> — a GPS track export; saved with placement left blank and flagged "needs enrichment"</li>
             </ul>
           </div>
 
@@ -79,12 +80,12 @@ export function UploadPage() {
               {file ? (
                 <p className="text-sm font-medium text-primary">{file.name}</p>
               ) : (
-                <p className="text-sm text-secondary">Click to select a CSV or JSON file</p>
+                <p className="text-sm text-secondary">Click to select a CSV, JSON, or GPX file</p>
               )}
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,text/csv,application/json,.json"
+                accept=".csv,text/csv,application/json,.json,.gpx,application/gpx+xml"
                 onChange={handleFileChange}
                 className="hidden"
               />

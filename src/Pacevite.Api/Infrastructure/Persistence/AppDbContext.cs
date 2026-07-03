@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventSplit> EventSplits => Set<EventSplit>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<SyncConnection> SyncConnections => Set<SyncConnection>();
 
     private static readonly ValueConverter<Dictionary<string, object>, string> JsonDictConverter = new(
         v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
@@ -55,6 +56,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithOne(s => s.Event)
                 .HasForeignKey(s => s.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.SyncConnection)
+                .WithMany(sc => sc.Events)
+                .HasForeignKey(e => e.SyncConnectionId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<EventSplit>(entity =>
@@ -73,6 +79,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasIndex(rt => new { rt.UserId, rt.RevokedAt });
             entity.Ignore(rt => rt.IsExpired);
             entity.Ignore(rt => rt.IsActive);
+        });
+
+        builder.Entity<SyncConnection>(entity =>
+        {
+            entity.HasKey(sc => sc.Id);
+
+            entity.Property(sc => sc.Platform)
+                .HasConversion<string>();
+
+            entity.HasIndex(sc => new { sc.UserId, sc.Platform }).IsUnique();
         });
     }
 }

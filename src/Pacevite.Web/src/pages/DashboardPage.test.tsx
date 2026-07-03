@@ -85,6 +85,49 @@ describe('DashboardPage', () => {
     })
   })
 
+  it('shows a needs-enrichment badge for events missing placement data', async () => {
+    server.use(
+      http.get('http://localhost/api/events', () =>
+        HttpResponse.json([
+          {
+            id: 'event-gpx-1',
+            eventType: 'GENERIC',
+            eventName: 'Morning Run',
+            eventDate: '2026-05-01',
+            completion: 'FINISHED',
+            elapsedSecs: 2700,
+            overallRank: null,
+            ageGroupRank: null,
+            fieldSize: null,
+            ageGroupFieldSize: null,
+            source: 'GPX',
+            needsEnrichment: true,
+            createdAt: '2026-05-01T00:00:00Z',
+            splits: [],
+          },
+        ])
+      )
+    )
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByText(/needs enrichment/i)).toBeInTheDocument()
+    })
+  })
+
+  it('does not show a needs-enrichment badge for complete events', async () => {
+    renderDashboard()
+
+    const heading = await screen.findByRole('heading', { name: /all events/i })
+    const section = heading.closest('section')!
+
+    await waitFor(() => {
+      expect(within(section).getByText('Berlin Marathon')).toBeInTheDocument()
+    })
+    expect(within(section).queryByText(/needs enrichment/i)).not.toBeInTheDocument()
+  })
+
   it('calls delete endpoint when delete button is clicked', async () => {
     let deletedId: string | undefined
 

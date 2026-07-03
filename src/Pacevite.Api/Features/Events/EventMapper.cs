@@ -17,6 +17,7 @@ internal static class EventMapper
         ev.FieldSize,
         ev.AgeGroupFieldSize,
         ev.Source,
+        ev.NeedsEnrichment,
         ev.CreatedAt,
         ev.Splits.Select(s => new EventSplitResponse(s.Id, s.SplitType, s.SplitLabel, s.SplitSecs, s.CumulativeSecs)).ToList());
 }

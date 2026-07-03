@@ -15,8 +15,9 @@ public sealed class JsonEventParser : IEventParser
         AllowTrailingCommas = true
     };
 
-    public bool CanParse(string contentType) =>
-        contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase);
+    public bool CanParse(string contentType, string fileName) =>
+        contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase)
+        || fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
 
     public IReadOnlyList<ParsedEvent> Parse(Stream content)
     {
@@ -41,7 +42,8 @@ public sealed class JsonEventParser : IEventParser
             AgeGroupFieldSize = TryGetInt(el, "ag_field_size"),
             Location = TryGetDict(el, "location"),
             Metadata = TryGetDict(el, "metadata"),
-            Splits = TryGetSplits(el)
+            Splits = TryGetSplits(el),
+            Source = "JSON"
         };
     }
 

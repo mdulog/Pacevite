@@ -10,8 +10,9 @@ public sealed class CsvEventParser : IEventParser
     private const string ContentType = "text/csv";
     private const int RequiredColumnCount = 5;
 
-    public bool CanParse(string contentType) =>
-        contentType.StartsWith(ContentType, StringComparison.OrdinalIgnoreCase);
+    public bool CanParse(string contentType, string fileName) =>
+        contentType.StartsWith(ContentType, StringComparison.OrdinalIgnoreCase)
+        || fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
 
     public IReadOnlyList<ParsedEvent> Parse(Stream content)
     {
@@ -46,7 +47,8 @@ public sealed class CsvEventParser : IEventParser
                 OverallRank = cols.Length > 5 && !string.IsNullOrWhiteSpace(cols[5]) ? int.Parse(cols[5].Trim(), CultureInfo.InvariantCulture) : null,
                 AgeGroupRank = cols.Length > 6 && !string.IsNullOrWhiteSpace(cols[6]) ? int.Parse(cols[6].Trim(), CultureInfo.InvariantCulture) : null,
                 FieldSize = cols.Length > 7 && !string.IsNullOrWhiteSpace(cols[7]) ? int.Parse(cols[7].Trim(), CultureInfo.InvariantCulture) : null,
-                AgeGroupFieldSize = cols.Length > 8 && !string.IsNullOrWhiteSpace(cols[8]) ? int.Parse(cols[8].Trim(), CultureInfo.InvariantCulture) : null
+                AgeGroupFieldSize = cols.Length > 8 && !string.IsNullOrWhiteSpace(cols[8]) ? int.Parse(cols[8].Trim(), CultureInfo.InvariantCulture) : null,
+                Source = "CSV"
             });
         }
 

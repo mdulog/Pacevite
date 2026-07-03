@@ -102,6 +102,32 @@ public sealed class EventEndpointsTests
         return content;
     }
 
+    // Content type intentionally generic (application/octet-stream) — real browsers rarely
+    // have a MIME mapping for .gpx and fall back to this, so dispatch must rely on the
+    // filename extension rather than trusting the content type header.
+    private static MultipartFormDataContent BuildGpxUpload(string gpx, string contentType = "application/octet-stream")
+    {
+        var content = new MultipartFormDataContent();
+        var bytes = Encoding.UTF8.GetBytes(gpx);
+        var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        content.Add(fileContent, "file", "morning-run.gpx");
+        return content;
+    }
+
+    private const string SampleGpx = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <gpx version="1.1" creator="Garmin Connect" xmlns="http://www.topografix.com/GPX/1/1">
+          <trk>
+            <name>Local 10K</name>
+            <trkseg>
+              <trkpt lat="52.5" lon="13.4"><ele>34.0</ele><time>2026-05-01T08:00:00Z</time></trkpt>
+              <trkpt lat="52.51" lon="13.41"><ele>36.0</ele><time>2026-05-01T08:45:00Z</time></trkpt>
+            </trkseg>
+          </trk>
+        </gpx>
+        """;
+
     [Test]
     public async Task Upload_CsvFile_Returns200WithCreatedEvents()
     {
@@ -136,6 +162,52 @@ public sealed class EventEndpointsTests
         var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
         await Assert.That(events!.Count).IsEqualTo(1);
         await Assert.That(events[0].EventType).IsEqualTo("HYROX");
+    }
+
+    [Test]
+    public async Task Upload_GpxFileWithGenericContentType_Returns200WithCreatedEvent()
+    {
+        var token = await GetTokenAsync("gpx-upload@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.PostAsync("/api/events/upload", BuildGpxUpload(SampleGpx));
+
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+
+        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+        await Assert.That(events!.Count).IsEqualTo(1);
+        await Assert.That(events[0].EventName).IsEqualTo("Local 10K");
+        await Assert.That(events[0].EventType).IsEqualTo("GENERIC");
+        await Assert.That(events[0].Completion).IsEqualTo("FINISHED");
+        await Assert.That(events[0].ElapsedSecs).IsEqualTo(2700);
+        await Assert.That(events[0].EventDate).IsEqualTo(new DateOnly(2026, 5, 1));
+    }
+
+    [Test]
+    public async Task Upload_GpxFile_SetsSourceGpxAndNeedsEnrichmentTrue()
+    {
+        var token = await GetTokenAsync("gpx-enrichment@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _client.PostAsync("/api/events/upload", BuildGpxUpload(SampleGpx));
+        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+
+        await Assert.That(events![0].Source).IsEqualTo("GPX");
+        await Assert.That(events[0].NeedsEnrichment).IsTrue();
+    }
+
+    [Test]
+    public async Task Upload_GpxFile_ReturnedByGetEventsWithEnrichmentFlag()
+    {
+        var token = await GetTokenAsync("gpx-getevents@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        await _client.PostAsync("/api/events/upload", BuildGpxUpload(SampleGpx));
+        var response = await _client.GetAsync("/api/events");
+        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+
+        await Assert.That(events!.Count).IsEqualTo(1);
+        await Assert.That(events[0].NeedsEnrichment).IsTrue();
     }
 
     [Test]

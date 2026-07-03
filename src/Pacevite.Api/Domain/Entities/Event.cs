@@ -21,7 +21,14 @@ public class Event
     public Dictionary<string, object> Metadata { get; set; } = [];
 
     public string Source { get; init; } = "MANUAL";
+    public bool NeedsEnrichment { get; set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+
+    // Set only for events created from a sync pathway — identifies the originating
+    // external activity so a re-sync doesn't offer the same activity twice.
+    public string? ExternalActivityId { get; init; }
+    public Guid? SyncConnectionId { get; init; }
+    public SyncConnection? SyncConnection { get; init; }
 
     public ICollection<EventSplit> Splits { get; init; } = [];
 }

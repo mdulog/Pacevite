@@ -15,7 +15,7 @@ public sealed class UploadEventHandler(
     public async ValueTask<IReadOnlyList<EventResponse>> Handle(
         UploadEventCommand command, CancellationToken cancellationToken)
     {
-        var parser = parsers.FirstOrDefault(p => p.CanParse(command.ContentType))
+        var parser = parsers.FirstOrDefault(p => p.CanParse(command.ContentType, command.FileName))
             ?? throw new InvalidOperationException($"No parser available for content type '{command.ContentType}'.");
 
         var parsed = parser.Parse(command.FileStream);
@@ -63,7 +63,9 @@ public sealed class UploadEventHandler(
                 FieldSize = p.FieldSize,
                 AgeGroupFieldSize = p.AgeGroupFieldSize,
                 Location = p.Location,
-                Metadata = p.Metadata
+                Metadata = p.Metadata,
+                NeedsEnrichment = p.NeedsEnrichment,
+                Source = p.Source
             };
 
             foreach (var split in p.Splits)

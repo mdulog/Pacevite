@@ -7,8 +7,10 @@ import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { UploadPage } from '@/pages/UploadPage'
+import { AddEventPage } from '@/pages/AddEventPage'
 import { EventDetailPage } from '@/pages/EventDetailPage'
 import { PredictPage } from '@/pages/PredictPage'
+import { SyncPage } from '@/pages/SyncPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +41,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/events/new',
+    element: (
+      <AuthGuard>
+        <AddEventPage />
+      </AuthGuard>
+    ),
+  },
+  {
     path: '/events/:id',
     element: (
       <AuthGuard>
@@ -51,6 +61,14 @@ const router = createBrowserRouter([
     element: (
       <AuthGuard>
         <PredictPage />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/sync',
+    element: (
+      <AuthGuard>
+        <SyncPage />
       </AuthGuard>
     ),
   },

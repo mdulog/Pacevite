@@ -12,6 +12,7 @@ public sealed record EventResponse(
     int? FieldSize,
     int? AgeGroupFieldSize,
     string Source,
+    bool NeedsEnrichment,
     DateTimeOffset CreatedAt,
     IReadOnlyList<EventSplitResponse> Splits);
 

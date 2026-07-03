@@ -44,6 +44,11 @@ export function EventDetailPage() {
             {event.eventType} · {event.eventDate}
           </p>
           <h2 className="text-2xl font-bold text-primary">{event.eventName}</h2>
+          {event.needsEnrichment && (
+            <p className="mt-2 inline-block text-xs font-medium bg-amber-100 text-amber-800 px-2 py-1 rounded">
+              Needs enrichment — placement and splits weren't available from the source and can be added manually.
+            </p>
+          )}
           <div className="flex gap-6 mt-2 text-sm text-secondary">
             <span>Time: <strong className="text-primary">{formatElapsed(event.elapsedSecs)}</strong></span>
             {event.overallRank != null && event.fieldSize != null && (

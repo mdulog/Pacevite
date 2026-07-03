@@ -10,7 +10,7 @@ import { ProgressChart } from '@/components/ProgressChart'
 import { PbPanel } from '@/components/PbPanel'
 import { PredictionTeaser } from '@/components/PredictionTeaser'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { Upload, Trash2, Trophy, LogOut, ChartLine, ChartNoAxesColumn } from 'lucide-react'
+import { Upload, Plus, Trash2, Trophy, LogOut, ChartLine, ChartNoAxesColumn, Link2 } from 'lucide-react'
 
 export function DashboardPage() {
   const { user, logout } = useAuth()
@@ -49,6 +49,12 @@ export function DashboardPage() {
         <div className="flex items-center gap-4">
           <span className="text-sm text-secondary">{user?.email}</span>
           <Link
+            to="/events/new"
+            className="inline-flex items-center gap-2 text-sm text-secondary hover:text-primary"
+          >
+            <Plus size={14} /> Add Event
+          </Link>
+          <Link
             to="/upload"
             className="inline-flex items-center gap-2 bg-action text-action-fg text-sm px-3 py-2 rounded-md hover:bg-action-hover"
           >
@@ -59,6 +65,12 @@ export function DashboardPage() {
             className="inline-flex items-center gap-2 text-sm text-secondary hover:text-primary"
           >
             <ChartNoAxesColumn size={14} /> Predict
+          </Link>
+          <Link
+            to="/sync"
+            className="inline-flex items-center gap-2 text-sm text-secondary hover:text-primary"
+          >
+            <Link2 size={14} /> Sync
           </Link>
           <ThemeToggle />
           <button
@@ -150,6 +162,11 @@ export function DashboardPage() {
                       <p className="text-sm font-medium text-primary">{ev.eventName}</p>
                       <p className="text-xs text-secondary">{ev.eventDate}</p>
                     </div>
+                    {ev.needsEnrichment && (
+                      <span className="text-xs font-medium bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                        Needs enrichment
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">

@@ -12,13 +12,13 @@ public sealed class CsvEventParserTests
     [Test]
     public async Task CanParse_TextCsv_ReturnsTrue()
     {
-        await Assert.That(_parser.CanParse("text/csv")).IsTrue();
+        await Assert.That(_parser.CanParse("text/csv", "events.csv")).IsTrue();
     }
 
     [Test]
     public async Task CanParse_ApplicationJson_ReturnsFalse()
     {
-        await Assert.That(_parser.CanParse("application/json")).IsFalse();
+        await Assert.That(_parser.CanParse("application/json", "events.json")).IsFalse();
     }
 
     [Test]

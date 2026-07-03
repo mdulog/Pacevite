@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Mediator;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Pacevite.Api.Contracts.Requests;
 using Pacevite.Api.Contracts.Responses;
+using Pacevite.Api.Features.Events.CreateEvent;
 using Pacevite.Api.Features.Events.DeleteEvent;
 using Pacevite.Api.Features.Events.GetEventById;
 using Pacevite.Api.Features.Events.GetEvents;
@@ -17,6 +19,7 @@ public static class EventEndpoints
     public static IEndpointRouteBuilder MapEventEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/upload", UploadAsync).WithName("UploadEvents").DisableAntiforgery();
+        app.MapPost("/", CreateAsync).WithName("CreateEvent");
         app.MapGet("/", GetEventsAsync).WithName("GetEvents");
         app.MapGet("/personal-bests", GetPersonalBestsAsync).WithName("GetPersonalBests");
         app.MapGet("/prediction", GetPredictionAsync).WithName("GetPrediction");
@@ -40,9 +43,41 @@ public static class EventEndpoints
         await using var stream = file.OpenReadStream();
 
         var result = await mediator.Send(
-            new UploadEventCommand(userId, file.ContentType, stream), ct);
+            new UploadEventCommand(userId, file.ContentType, file.FileName, stream), ct);
 
         return TypedResults.Ok(result);
+    }
+
+    private static async Task<Results<Created<EventResponse>, Conflict<string>>> CreateAsync(
+        CreateEventRequest request,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var userId = GetUserId(user);
+
+        var splits = (request.Splits ?? [])
+            .Select(s => new CreateEventSplitInput(s.SplitType, s.SplitLabel, s.SplitSecs, s.CumulativeSecs))
+            .ToList();
+
+        var result = await mediator.Send(
+            new CreateEventCommand(
+                userId,
+                request.EventType,
+                request.EventName,
+                request.EventDate,
+                request.Completion,
+                request.ElapsedSecs,
+                request.OverallRank,
+                request.AgeGroupRank,
+                request.FieldSize,
+                request.AgeGroupFieldSize,
+                splits),
+            ct);
+
+        return result is null
+            ? TypedResults.Conflict($"An event named '{request.EventName}' already exists for {request.EventDate}.")
+            : TypedResults.Created($"/api/events/{result.Id}", result);
     }
 
     private static async Task<Ok<IReadOnlyList<EventResponse>>> GetEventsAsync(

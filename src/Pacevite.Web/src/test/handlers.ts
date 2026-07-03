@@ -51,6 +51,7 @@ export const handlers = [
       fieldSize: 45000,
       ageGroupFieldSize: null,
       source: 'manual',
+      needsEnrichment: false,
       createdAt: '2024-10-01T00:00:00Z',
       splits: [
         { id: 'split-1', splitType: 'RUN', splitLabel: '10km', splitSecs: 2940, cumulativeSecs: 2940 },
@@ -72,6 +73,7 @@ export const handlers = [
         fieldSize: 45000,
         ageGroupFieldSize: null,
         source: 'manual',
+        needsEnrichment: false,
         createdAt: '2024-10-01T00:00:00Z',
         splits: [],
       },
@@ -79,6 +81,27 @@ export const handlers = [
   ),
   http.delete('http://localhost/api/events/:id', () =>
     new HttpResponse(null, { status: 204 })
+  ),
+  http.post('http://localhost/api/events', () =>
+    HttpResponse.json(
+      {
+        id: 'event-201',
+        eventType: 'GENERIC',
+        eventName: 'Local 10K',
+        eventDate: '2026-05-01',
+        completion: 'FINISHED',
+        elapsedSecs: 2700,
+        overallRank: null,
+        ageGroupRank: null,
+        fieldSize: null,
+        ageGroupFieldSize: null,
+        source: 'MANUAL',
+        needsEnrichment: false,
+        createdAt: '2026-05-01T00:00:00Z',
+        splits: [],
+      },
+      { status: 201 }
+    )
   ),
   http.post('http://localhost/api/events/upload', () =>
     HttpResponse.json(
@@ -95,6 +118,7 @@ export const handlers = [
           fieldSize: null,
           ageGroupFieldSize: null,
           source: 'csv',
+          needsEnrichment: false,
           createdAt: '2024-10-01T00:00:00Z',
           splits: [],
         },
@@ -104,6 +128,34 @@ export const handlers = [
   ),
   http.post('http://localhost/api/auth/logout', () =>
     new HttpResponse(null, { status: 204 })
+  ),
+  http.get('http://localhost/api/sync/strava/connect', () =>
+    HttpResponse.json({ authorizeUrl: 'https://www.strava.com/oauth/authorize?client_id=test' })
+  ),
+  // Default: not connected — tests override this to exercise the connected states.
+  http.get('http://localhost/api/sync/strava/activities', () =>
+    new HttpResponse('No Strava connection found — connect Strava first.', { status: 409 })
+  ),
+  http.post('http://localhost/api/sync/strava/activities/confirm', () =>
+    HttpResponse.json(
+      {
+        id: 'event-strava-1',
+        eventType: 'GENERIC',
+        eventName: 'Synced Activity',
+        eventDate: '2026-05-10',
+        completion: 'FINISHED',
+        elapsedSecs: 4500,
+        overallRank: null,
+        ageGroupRank: null,
+        fieldSize: null,
+        ageGroupFieldSize: null,
+        source: 'STRAVA',
+        needsEnrichment: true,
+        createdAt: '2026-05-10T00:00:00Z',
+        splits: [],
+      },
+      { status: 201 }
+    )
   ),
 ]
 

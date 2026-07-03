@@ -15,11 +15,13 @@ using Microsoft.IdentityModel.Tokens;
 using Pacevite.Api.Features.Auth;
 using Pacevite.Api.Features.Events;
 using Pacevite.Api.Features.Events.PredictionCoaching;
+using Pacevite.Api.Features.Sync;
 using Pacevite.Api.Infrastructure.Auth;
 using Pacevite.Api.Infrastructure.Chat;
 using Pacevite.Api.Infrastructure.Parsing;
 using Pacevite.Api.Infrastructure.Persistence;
 using Pacevite.Api.Infrastructure.OpenApi;
+using Pacevite.Api.Infrastructure.Sync;
 using Pacevite.Api.Pipeline;
 using Scalar.AspNetCore;
 
@@ -127,6 +129,19 @@ builder.Services.AddScoped<PredictionCoachingHandler>();
 // ── Event Parsers (registered as IEventParser — endpoint dispatches by content type) ──
 builder.Services.AddSingleton<IEventParser, CsvEventParser>();
 builder.Services.AddSingleton<IEventParser, JsonEventParser>();
+builder.Services.AddSingleton<IEventParser, GpxEventParser>();
+
+// ── Data Protection (encrypts SyncConnection tokens at rest — OWASP A02) ──────
+builder.Services.AddDataProtection();
+
+// ── Strava Sync ────────────────────────────────────────────────────────────────
+builder.Services.Configure<StravaOptions>(
+    builder.Configuration.GetSection(StravaOptions.SectionName));
+
+builder.Services.AddHttpClient<IStravaClient, StravaClient>(client =>
+{
+    client.BaseAddress = new Uri("https://www.strava.com/");
+});
 
 // ── OpenAPI ───────────────────────────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
@@ -162,6 +177,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = WriteHe
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.MapGroup("/api").MapAuthEndpoints();
 app.MapGroup("/api/events").RequireAuthorization().MapEventEndpoints();
+// Auth applied per-route inside MapSyncEndpoints — the Strava callback must be anonymous.
+app.MapGroup("/api/sync").MapSyncEndpoints();
 
 app.Run();
 

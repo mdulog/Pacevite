@@ -1,23 +1,20 @@
 using FluentValidation;
+using Pacevite.Api.Infrastructure.Parsing;
 
 namespace Pacevite.Api.Features.Events.Upload;
 
 public sealed class UploadEventValidator : AbstractValidator<UploadEventCommand>
 {
-    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "text/csv",
-        "application/json"
-    };
-
-    public UploadEventValidator()
+    public UploadEventValidator(IEnumerable<IEventParser> parsers)
     {
         RuleFor(x => x.UserId).NotEmpty();
 
+        // Delegates to the registered parsers rather than a hardcoded allowlist — adding a
+        // new IEventParser automatically extends what this endpoint accepts (OCP).
         RuleFor(x => x.ContentType)
             .NotEmpty()
-            .Must(ct => AllowedContentTypes.Any(allowed => ct.StartsWith(allowed, StringComparison.OrdinalIgnoreCase)))
-            .WithMessage("Only text/csv and application/json are accepted.");
+            .Must((command, contentType) => parsers.Any(p => p.CanParse(contentType, command.FileName)))
+            .WithMessage("No parser is registered for this file type.");
 
         RuleFor(x => x.FileStream)
             .NotNull()

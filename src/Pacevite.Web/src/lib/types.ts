@@ -16,6 +16,7 @@ export interface EventResponse {
   fieldSize: number | null
   ageGroupFieldSize: number | null
   source: string
+  needsEnrichment: boolean
   createdAt: string
   splits: EventSplitResponse[]
 }
@@ -55,6 +56,18 @@ export interface ValidationProblemDetails {
   title: string
   status: number
   errors: Record<string, string[]>
+}
+
+export interface ConnectStravaResponse {
+  authorizeUrl: string
+}
+
+export interface StravaActivityPreviewResponse {
+  externalActivityId: string
+  name: string
+  eventDate: string
+  elapsedSecs: number
+  possibleDuplicate: boolean
 }
 
 // Formats elapsed seconds as h:mm:ss

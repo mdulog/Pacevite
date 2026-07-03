@@ -17,7 +17,7 @@ namespace Pacevite.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -251,6 +251,9 @@ namespace Pacevite.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ExternalActivityId")
+                        .HasColumnType("text");
+
                     b.Property<int?>("FieldSize")
                         .HasColumnType("integer");
 
@@ -262,12 +265,18 @@ namespace Pacevite.Api.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
+                    b.Property<bool>("NeedsEnrichment")
+                        .HasColumnType("boolean");
+
                     b.Property<int?>("OverallRank")
                         .HasColumnType("integer");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("SyncConnectionId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -278,6 +287,8 @@ namespace Pacevite.Api.Migrations
                     b.HasIndex("Metadata");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Metadata"), "GIN");
+
+                    b.HasIndex("SyncConnectionId");
 
                     b.HasIndex("UserId", "EventDate");
 
@@ -356,6 +367,46 @@ namespace Pacevite.Api.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("Pacevite.Api.Domain.Entities.SyncConnection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AccessTokenEncrypted")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ConnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExternalAthleteId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RefreshTokenEncrypted")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Platform")
+                        .IsUnique();
+
+                    b.ToTable("SyncConnections");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -407,6 +458,16 @@ namespace Pacevite.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pacevite.Api.Domain.Entities.Event", b =>
+                {
+                    b.HasOne("Pacevite.Api.Domain.Entities.SyncConnection", "SyncConnection")
+                        .WithMany("Events")
+                        .HasForeignKey("SyncConnectionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("SyncConnection");
+                });
+
             modelBuilder.Entity("Pacevite.Api.Domain.Entities.EventSplit", b =>
                 {
                     b.HasOne("Pacevite.Api.Domain.Entities.Event", "Event")
@@ -421,6 +482,11 @@ namespace Pacevite.Api.Migrations
             modelBuilder.Entity("Pacevite.Api.Domain.Entities.Event", b =>
                 {
                     b.Navigation("Splits");
+                });
+
+            modelBuilder.Entity("Pacevite.Api.Domain.Entities.SyncConnection", b =>
+                {
+                    b.Navigation("Events");
                 });
 #pragma warning restore 612, 618
         }

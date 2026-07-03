@@ -29,6 +29,29 @@ describe('UploadPage', () => {
     expect(screen.getByRole('button', { name: /upload/i })).toBeDisabled()
   })
 
+  it('mentions GPX as a supported format', () => {
+    renderUploadPage()
+
+    expect(screen.getAllByText(/gpx/i).length).toBeGreaterThan(0)
+  })
+
+  it('accepts .gpx files in the file picker', () => {
+    renderUploadPage()
+
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!
+    expect(input.accept).toContain('.gpx')
+  })
+
+  it('shows selected filename when a GPX file is chosen', async () => {
+    renderUploadPage()
+
+    const file = new File(['<gpx></gpx>'], 'morning-run.gpx', { type: 'application/octet-stream' })
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!
+    await userEvent.upload(input, file)
+
+    expect(screen.getByText('morning-run.gpx')).toBeInTheDocument()
+  })
+
   it('shows selected filename when file is chosen', async () => {
     renderUploadPage()
 

@@ -4,7 +4,7 @@ namespace Pacevite.Api.Infrastructure.Parsing;
 // modifying existing parsers (OCP). Each implementation is stateless and thread-safe.
 public interface IEventParser
 {
-    bool CanParse(string contentType);
+    bool CanParse(string contentType, string fileName);
     IReadOnlyList<ParsedEvent> Parse(Stream content);
 }
 
@@ -22,6 +22,12 @@ public sealed class ParsedEvent
     public Dictionary<string, object> Location { get; init; } = [];
     public Dictionary<string, object> Metadata { get; init; } = [];
     public IReadOnlyList<ParsedSplit> Splits { get; init; } = [];
+
+    // True when the source structurally cannot supply placement/splits (e.g. a raw
+    // GPS track) — surfaced to the user as "needs enrichment" rather than assumed absent.
+    public bool NeedsEnrichment { get; init; }
+
+    public required string Source { get; init; }
 }
 
 public sealed class ParsedSplit

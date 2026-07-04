@@ -204,10 +204,10 @@ public sealed class EventEndpointsTests
 
         await _client.PostAsync("/api/events/upload", BuildGpxUpload(SampleGpx));
         var response = await _client.GetAsync("/api/events");
-        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+        var page = await response.Content.ReadFromJsonAsync<PagedEventsResponse>();
 
-        await Assert.That(events!.Count).IsEqualTo(1);
-        await Assert.That(events[0].NeedsEnrichment).IsTrue();
+        await Assert.That(page!.Items.Count).IsEqualTo(1);
+        await Assert.That(page.Items[0].NeedsEnrichment).IsTrue();
     }
 
     [Test]
@@ -243,9 +243,9 @@ public sealed class EventEndpointsTests
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
-        await Assert.That(events!.Count).IsEqualTo(1);
-        await Assert.That(events[0].EventType).IsEqualTo("MARATHON");
+        var page = await response.Content.ReadFromJsonAsync<PagedEventsResponse>();
+        await Assert.That(page!.Items.Count).IsEqualTo(1);
+        await Assert.That(page.Items[0].EventType).IsEqualTo("MARATHON");
     }
 
     [Test]
@@ -288,8 +288,8 @@ public sealed class EventEndpointsTests
         await Assert.That(deleteResponse.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
 
         var afterDelete = await _client.GetAsync("/api/events");
-        var remaining = await afterDelete.Content.ReadFromJsonAsync<List<EventResponse>>();
-        await Assert.That(remaining!.Count).IsEqualTo(0);
+        var remaining = await afterDelete.Content.ReadFromJsonAsync<PagedEventsResponse>();
+        await Assert.That(remaining!.Items.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -314,8 +314,8 @@ public sealed class EventEndpointsTests
         // Verify event still exists for User A
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenA);
         var afterDelete = await _client.GetAsync("/api/events");
-        var remaining = await afterDelete.Content.ReadFromJsonAsync<List<EventResponse>>();
-        await Assert.That(remaining!.Count).IsEqualTo(1);
+        var remaining = await afterDelete.Content.ReadFromJsonAsync<PagedEventsResponse>();
+        await Assert.That(remaining!.Items.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -381,7 +381,7 @@ public sealed class EventEndpointsTests
     }
 
     [Test]
-    public async Task Upload_JsonWithSplits_GetEventsReturnsSplits()
+    public async Task Upload_JsonWithSplits_GetEventByIdReturnsSplits()
     {
         var token = await GetTokenAsync("splits-get@example.com");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -399,16 +399,17 @@ public sealed class EventEndpointsTests
             }]
             """;
 
-        await _client.PostAsync("/api/events/upload", BuildJsonUpload(json));
+        var uploadResponse = await _client.PostAsync("/api/events/upload", BuildJsonUpload(json));
+        var uploaded = await uploadResponse.Content.ReadFromJsonAsync<List<EventResponse>>();
 
-        var response = await _client.GetAsync("/api/events");
-        var events = await response.Content.ReadFromJsonAsync<List<EventResponse>>();
+        var response = await _client.GetAsync($"/api/events/{uploaded![0].Id}");
+        var ev = await response.Content.ReadFromJsonAsync<EventResponse>();
 
-        await Assert.That(events![0].Splits.Count).IsEqualTo(1);
-        await Assert.That(events[0].Splits[0].SplitType).IsEqualTo("STATION");
-        await Assert.That(events[0].Splits[0].SplitLabel).IsEqualTo("SkiErg");
-        await Assert.That(events[0].Splits[0].SplitSecs).IsEqualTo(300);
-        await Assert.That(events[0].Splits[0].CumulativeSecs).IsEqualTo(300);
+        await Assert.That(ev!.Splits.Count).IsEqualTo(1);
+        await Assert.That(ev.Splits[0].SplitType).IsEqualTo("STATION");
+        await Assert.That(ev.Splits[0].SplitLabel).IsEqualTo("SkiErg");
+        await Assert.That(ev.Splits[0].SplitSecs).IsEqualTo(300);
+        await Assert.That(ev.Splits[0].CumulativeSecs).IsEqualTo(300);
     }
 
     [Test]

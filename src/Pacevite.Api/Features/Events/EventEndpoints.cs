@@ -80,16 +80,20 @@ public static class EventEndpoints
             : TypedResults.Created($"/api/events/{result.Id}", result);
     }
 
-    private static async Task<Ok<IReadOnlyList<EventResponse>>> GetEventsAsync(
+    private static async Task<Ok<PagedEventsResponse>> GetEventsAsync(
         ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct,
         string? eventType = null,
         DateOnly? from = null,
-        DateOnly? to = null)
+        DateOnly? to = null,
+        string? search = null,
+        string? cursor = null,
+        int limit = GetEventsQuery.DefaultLimit)
     {
         var userId = GetUserId(user);
-        var result = await mediator.Send(new GetEventsQuery(userId, eventType, from, to), ct);
+        var result = await mediator.Send(
+            new GetEventsQuery(userId, eventType, from, to, search, cursor, limit), ct);
         return TypedResults.Ok(result);
     }
 

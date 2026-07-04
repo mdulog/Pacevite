@@ -21,5 +21,17 @@ public sealed class GetEventsValidator : AbstractValidator<GetEventsQuery>
             .Must(x => x.From <= x.To)
             .When(x => x.From.HasValue && x.To.HasValue)
             .WithMessage("From must not be later than To.");
+
+        RuleFor(x => x.Limit)
+            .InclusiveBetween(1, GetEventsQuery.MaxLimit)
+            .WithMessage($"Limit must be between 1 and {GetEventsQuery.MaxLimit}.");
+
+        RuleFor(x => x.Search)
+            .MaximumLength(GetEventsQuery.MaxSearchLength);
+
+        RuleFor(x => x.Cursor)
+            .Must(c => EventCursor.TryDecode(c, out _))
+            .When(x => x.Cursor is not null)
+            .WithMessage("Cursor is malformed.");
     }
 }

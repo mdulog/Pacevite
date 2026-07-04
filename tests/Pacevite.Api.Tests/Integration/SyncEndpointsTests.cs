@@ -202,8 +202,8 @@ public sealed class SyncEndpointsTests
         await Assert.That(created.NeedsEnrichment).IsTrue();
 
         var eventsResponse = await _client.GetAsync("/api/events");
-        var events = await eventsResponse.Content.ReadFromJsonAsync<List<EventResponse>>();
-        await Assert.That(events!.Any(e => e.EventName == "Weekend Ride")).IsTrue();
+        var page = await eventsResponse.Content.ReadFromJsonAsync<PagedEventsResponse>();
+        await Assert.That(page!.Items.Any(e => e.EventName == "Weekend Ride")).IsTrue();
     }
 
     [Test]

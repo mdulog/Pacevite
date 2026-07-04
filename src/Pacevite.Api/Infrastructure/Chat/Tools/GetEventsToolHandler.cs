@@ -34,19 +34,17 @@ public sealed class GetEventsToolHandler(
 
             var events = await query
                 .OrderByDescending(e => e.EventDate)
-                .Select(e => new
-                {
+                .Select(e => new EventToolSummary(
                     e.Id,
-                    EventType = e.EventType.ToString(),
+                    e.EventType.ToString(),
                     e.EventName,
-                    EventDate = e.EventDate.ToString("yyyy-MM-dd"),
-                    Completion = e.Completion.ToString(),
+                    e.EventDate.ToString("yyyy-MM-dd"),
+                    e.Completion.ToString(),
                     e.ElapsedSecs,
                     e.OverallRank,
                     e.AgeGroupRank,
-                    e.FieldSize,
-                    // AgeGroupFieldSize omitted — redundant without pairing context Claude already has from AgeGroupRank
-                })
+                    e.FieldSize))
+                // AgeGroupFieldSize omitted — redundant without pairing context Claude already has from AgeGroupRank
                 .ToListAsync(ct);
 
             if (events.Count == 0)
@@ -60,4 +58,15 @@ public sealed class GetEventsToolHandler(
             throw;
         }
     }
+
+    private sealed record EventToolSummary(
+        Guid Id,
+        string EventType,
+        string EventName,
+        string EventDate,
+        string Completion,
+        int ElapsedSecs,
+        int? OverallRank,
+        int? AgeGroupRank,
+        int? FieldSize);
 }

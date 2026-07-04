@@ -54,7 +54,7 @@ public sealed class GetStravaActivitiesHandler(
 
             var userEvents = await db.Events
                 .Where(e => e.UserId == query.UserId)
-                .Select(e => new { e.EventDate, e.ExternalActivityId })
+                .Select(e => new UserEventKey(e.EventDate, e.ExternalActivityId))
                 .ToListAsync(cancellationToken);
 
             var alreadyImportedIds = userEvents
@@ -83,4 +83,6 @@ public sealed class GetStravaActivitiesHandler(
             throw;
         }
     }
+
+    private readonly record struct UserEventKey(DateOnly EventDate, string? ExternalActivityId);
 }

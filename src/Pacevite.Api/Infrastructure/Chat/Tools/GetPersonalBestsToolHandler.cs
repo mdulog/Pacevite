@@ -21,13 +21,11 @@ public sealed class GetPersonalBestsToolHandler(
                 .ToListAsync(ct);
 
             var personalBests = fastestPerType
-                .Select(e => new
-                {
-                    EventType = e.EventType.ToString(),
+                .Select(e => new PersonalBestToolSummary(
+                    e.EventType.ToString(),
                     e.EventName,
-                    EventDate = e.EventDate.ToString("yyyy-MM-dd"),
-                    e.ElapsedSecs,
-                })
+                    e.EventDate.ToString("yyyy-MM-dd"),
+                    e.ElapsedSecs))
                 .ToList();
 
             if (personalBests.Count == 0)
@@ -41,4 +39,6 @@ public sealed class GetPersonalBestsToolHandler(
             throw;
         }
     }
+
+    private sealed record PersonalBestToolSummary(string EventType, string EventName, string EventDate, int ElapsedSecs);
 }

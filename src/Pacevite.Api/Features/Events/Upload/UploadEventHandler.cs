@@ -25,7 +25,7 @@ public sealed class UploadEventHandler(
         // Duplicates are silently skipped rather than failing the entire upload.
         var existingKeys = db.Events
             .Where(e => e.UserId == command.UserId)
-            .Select(e => new { e.EventType, e.EventName, e.EventDate })
+            .Select(e => new EventKey(e.EventType, e.EventName, e.EventDate))
             .ToHashSet();
 
         foreach (var p in parsed)
@@ -42,7 +42,7 @@ public sealed class UploadEventHandler(
                 continue;
             }
 
-            var key = new { EventType = eventType, p.EventName, p.EventDate };
+            var key = new EventKey(eventType, p.EventName, p.EventDate);
             if (existingKeys.Contains(key))
             {
                 logger.LogInformation("Skipping duplicate event: {EventType} {EventName} {EventDate} for {UserId}",
@@ -91,4 +91,6 @@ public sealed class UploadEventHandler(
         logger.LogInformation("Uploaded {Count} events for {UserId}", created.Count, command.UserId);
         return created.Select(EventMapper.ToResponse).ToList();
     }
+
+    private readonly record struct EventKey(EventType EventType, string EventName, DateOnly EventDate);
 }

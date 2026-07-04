@@ -21,8 +21,7 @@ public sealed class ChatEndpointsTests : IAsyncDisposable
 
     public ChatEndpointsTests()
     {
-        _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        _postgres = new PostgreSqlBuilder("postgres:17")
             .WithDatabase("pacevite_test")
             .WithUsername("test")
             .WithPassword("test")

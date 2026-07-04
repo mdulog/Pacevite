@@ -21,8 +21,7 @@ public sealed class GetEventByIdTests : IAsyncDisposable
 
     public GetEventByIdTests()
     {
-        _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        _postgres = new PostgreSqlBuilder("postgres:17")
             .WithDatabase("pacevite_getbyid_test")
             .WithUsername("test")
             .WithPassword("test")

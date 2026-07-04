@@ -21,8 +21,7 @@ public sealed class CreateEventTests : IAsyncDisposable
 
     public CreateEventTests()
     {
-        _postgres = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        _postgres = new PostgreSqlBuilder("postgres:17")
             .WithDatabase("pacevite_createevent_test")
             .WithUsername("test")
             .WithPassword("test")

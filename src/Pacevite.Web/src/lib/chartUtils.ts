@@ -12,13 +12,21 @@ export interface SplitDelta {
   faster: boolean
 }
 
+// Minimal shape charts need — satisfied by both EventResponse and TimelineEntry.
+export interface ChartEvent {
+  id: string
+  eventType: string
+  eventDate: string
+  elapsedSecs: number
+}
+
 /**
  * Groups events by their eventType, with each group sorted by eventDate ascending.
  * Sorting by date within each group makes it straightforward to render progress-over-time charts
  * without requiring callers to re-sort.
  */
-export function groupByEventType(events: EventResponse[]): Record<string, EventResponse[]> {
-  const grouped: Record<string, EventResponse[]> = {}
+export function groupByEventType<T extends ChartEvent>(events: T[]): Record<string, T[]> {
+  const grouped: Record<string, T[]> = {}
   for (const ev of events) {
     if (!grouped[ev.eventType]) grouped[ev.eventType] = []
     grouped[ev.eventType].push(ev)
@@ -33,8 +41,8 @@ export function groupByEventType(events: EventResponse[]): Record<string, EventR
  * Returns the single best (lowest elapsed time) event per event type.
  * The PB event object is returned by reference — callers must not mutate it.
  */
-export function computePbs(events: EventResponse[]): Record<string, EventResponse> {
-  const pbs: Record<string, EventResponse> = {}
+export function computePbs<T extends ChartEvent>(events: T[]): Record<string, T> {
+  const pbs: Record<string, T> = {}
   for (const ev of events) {
     if (!pbs[ev.eventType] || ev.elapsedSecs < pbs[ev.eventType].elapsedSecs) {
       pbs[ev.eventType] = ev

@@ -51,3 +51,31 @@ test('shows analytics panels after uploading events', async ({ page }) => {
   await expect(page.getByTestId('progress-chart-panel')).toBeVisible()
   await expect(page.getByTestId('pb-panel')).toBeVisible()
 })
+
+test('search filters the event list server-side', async ({ page }) => {
+  const email = uniqueEmail()
+  await registerViaApi(email)
+  await loginViaUi(page, email)
+
+  // Seed events via the upload UI
+  await page.click('a[href="/upload"]')
+  await page.waitForURL('/upload')
+  const csvPath = path.join(__dirname, 'fixtures/events.csv')
+  await page.setInputFiles('input[type="file"]', csvPath)
+  await page.waitForFunction(() => {
+    const btn = document.querySelector<HTMLButtonElement>('button[type="submit"]')
+    return btn !== null && !btn.disabled
+  })
+  await page.click('button[type="submit"]')
+  await page.waitForURL('/dashboard')
+
+  await expect(page.getByText('Test Half Marathon').first()).toBeVisible()
+
+  // Search for a term that matches nothing
+  await page.getByPlaceholder('Search events…').fill('zzz-no-such-event')
+  await expect(page.getByText(/no events match/i)).toBeVisible({ timeout: 5000 })
+
+  // Clear and search for the real event
+  await page.getByPlaceholder('Search events…').fill('Half')
+  await expect(page.getByText('Test Half Marathon').first()).toBeVisible({ timeout: 5000 })
+})

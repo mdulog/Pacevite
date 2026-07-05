@@ -39,3 +39,6 @@ Thumbs.db
 # Superpowers plugin — internal working copy (docs/plans/ and docs/specs/ are the canonical locations)
 .superpowers/
 docs/superpowers/
+
+# Claude Code — per-user local settings, not meant to travel with the repo
+.claude/*.local.json

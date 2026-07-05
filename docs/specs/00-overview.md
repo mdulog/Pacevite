@@ -27,7 +27,7 @@ The project is a mixed monorepo: an ASP.NET Core Slim API on .NET 10 sits beside
 4. Upload a CSV, JSON, or GPX file containing one or more race results.
 5. Manually enter a single race result.
 6. Connect a Strava account (OAuth) and import selected activities as events.
-7. View the full event history with client-side search and pagination.
+7. View the full event history with server-side search and pagination.
 8. View personal bests (fastest `Finished` result per event type).
 9. Drill into a single event to see split breakdown and comparison to personal averages.
 10. View a predicted finish time (linear regression over past results) with AI-generated coaching commentary.
@@ -109,8 +109,9 @@ The API also makes outbound calls to the Anthropic API (AI coaching/chat) and th
 | `POST /api/auth/logout` | authorized | Revoke refresh token, clear cookie |
 | `POST /api/events/upload` | authorized | Parse and persist uploaded CSV/JSON/GPX file |
 | `POST /api/events` | authorized | Manually create a single event |
-| `GET /api/events` | authorized | List events (filterable by type and date range) |
+| `GET /api/events` | authorized | List events (keyset-cursor paginated; filterable by type, date range, and name search) |
 | `GET /api/events/personal-bests` | authorized | Fastest Finished result per event type |
+| `GET /api/events/timeline` | authorized | Lightweight (date, type, elapsed, completion) series for charts |
 | `GET /api/events/prediction` | authorized | Linear-regression finish-time prediction |
 | `GET /api/events/prediction/coaching` | authorized | AI-generated coaching text for a prediction |
 | `GET /api/events/{id}` | authorized | Single event with ordered splits |
@@ -145,7 +146,7 @@ The API also makes outbound calls to the Anthropic API (AI coaching/chat) and th
 | Area | Pages / Components |
 |---|---|
 | Authentication | `LoginPage`, `RegisterPage`, `AuthContext`, `AuthGuard` |
-| Event dashboard | `DashboardPage` — event list with search, client-side pagination, delete |
+| Event dashboard | `DashboardPage` — paginated event list with server-side search (Load more), delete |
 | Progress analytics | `ProgressChart` (finish-time trend line), `PbPanel` (type-selector + PB bar) |
 | Personal bests | `DashboardPage` PB grid cards (sourced from `/events/personal-bests`) |
 | Event detail | `EventDetailPage` — split breakdown (`SplitChart`), race comparison (`RaceComparison`) |
@@ -229,9 +230,7 @@ cd src/Pacevite.Web && npm run dev
 
 | Area | Status / Gap |
 |---|---|
-| MSW mock casing drift | The upload MSW handler returns `eventType: 'Marathon'` and `source: 'csv'` (mixed/lower case), but `EventMapper` uppercases enum strings, so real API responses return `'MARATHON'` / `'CSV'`. Casing drift remains between mock and API (`src/test/handlers.ts`). |
 | Anthropic model ambiguity | `CLAUDE.md` names `claude-haiku-4-5-20251001`; `appsettings.json` defaults `Anthropic:Model` to `claude-sonnet-4-6`. The active model is determined by configuration at runtime. |
-| Client-side pagination only | The `GET /api/events` endpoint returns all events for the user. Pagination (page size 10) is applied client-side in `DashboardPage`. |
 | No DB-level FK from `Event.UserId` | Enforced at the application level only (queries always filter by the authenticated `UserId`), by design — see `docs/decisions/0006-no-fk-from-event-userid-to-identity.md`. |
 
 ## Assumptions

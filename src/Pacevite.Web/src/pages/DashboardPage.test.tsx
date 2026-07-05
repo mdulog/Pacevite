@@ -233,5 +233,9 @@ describe('DashboardPage', () => {
     })
     // Debounce means we must NOT have fired one request per keystroke
     expect(capturedSearches.filter(s => s !== null && s !== 'berlin')).toHaveLength(0)
+
+    // A search with zero results shows the "no matches" message, not "No events yet."
+    expect(await screen.findByText(/no events match “berlin”/i)).toBeInTheDocument()
+    expect(screen.queryByText('No events yet.')).not.toBeInTheDocument()
   })
 })
